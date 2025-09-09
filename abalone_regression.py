@@ -39,8 +39,8 @@ X_test_processed = preprocessor.transform(X_test)
 
 # 3. Build Model
 model = Sequential()
-model.add(Dense(32, activation='relu', input_shape=(X_train_processed.shape[1],)))
-model.add(Dense(16, activation='relu'))
+model.add(Dense(8, activation='relu', input_shape=(X_train_processed.shape[1],)))
+model.add(Dense(32, activation='relu'))
 model.add(Dense(8, activation='relu'))
 model.add(Dense(1, activation='linear'))
 
