@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dự đoán tuổi Bào Ngư</title>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.png') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <img src="{{ url_for('static', filename='favicon.png') }}" alt="Abalone Icon" class="abalone-icon">
+        <h1>Dự đoán Tuổi Bào Ngư</h1>
+        <p class="subtitle">Nhập các chỉ số của bào ngư để ước tính tuổi.</p>
+      </header>
+
+      <main>
+        <form id="abaloneForm">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="sex">Giới tính</label>
+              <select name="sex" id="sex">
+                <option value="0">Đực (M)</option>
+                <option value="1">Cái (F)</option>
+                <option value="2">Nhỏ (I)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="length">Chiều dài (mm)</label>
+              <input
+                type="number"
+                step="0.0001"
+                id="length"
+                placeholder="ví dụ: 0.455"
+                min="0.075"
+                max="0.815"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="diameter">Đường kính (mm)</label>
+              <input
+                type="number"
+                step="0.0001"
+                id="diameter"
+                placeholder="ví dụ: 0.365"
+                min="0.055"
+                max="0.650"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="height">Chiều cao (mm)</label>
+              <input
+                type="number"
+                step="0.0001"
+                id="height"
+                placeholder="ví dụ: 0.095"
+                min="0.001"
+                max="1.130"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="whole_weight">Trọng lượng toàn phần (g)</label>
+              <input
+                type="number"
+                step="0.0001"
+                id="whole_weight"
+                placeholder="ví dụ: 0.514"
+                min="0.002"
+                max="2.8255"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="shucked_weight">Thịt đã lấy (g)</label>
+              <input
+                type="number"
+                step="0.0001"
+                id="shucked_weight"
+                placeholder="ví dụ: 0.2245"
+                min="0.001"
+                max="1.488"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="viscera_weight">Nội tạng (g)</label>
+              <input
+                type="number"
+                step="0.0001"
+                id="viscera_weight"
+                placeholder="ví dụ: 0.101"
+                min="0.0005"
+                max="0.760"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="shell_weight">Vỏ (g)</label>
+              <input
+                type="number"
+                step="0.0001"
+                id="shell_weight"
+                placeholder="ví dụ: 0.150"
+                min="0.0015"
+                max="1.005"
+                required
+              />
+            </div>
+          </div>
+
+          <button type="submit" id="submitButton">
+            <span class="button-text">Dự đoán</span>
+            <div class="spinner hidden"></div>
+          </button>
+        </form>
+
+        <div id="result-container" class="hidden">
+          <p>Tuổi dự đoán là:</p>
+          <h2 id="result-text"></h2>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      document
+        .getElementById("abaloneForm")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          const submitButton = document.getElementById("submitButton");
+          const buttonText = submitButton.querySelector(".button-text");
+          const spinner = submitButton.querySelector(".spinner");
+          const resultContainer = document.getElementById("result-container");
+          const resultText = document.getElementById("result-text");
+
+          // Show loading state
+          submitButton.disabled = true;
+          buttonText.classList.add("hidden");
+          spinner.classList.remove("hidden");
+          resultContainer.classList.add("hidden");
+
+          const data = {
+            sex: parseInt(document.getElementById("sex").value),
+            length: parseFloat(document.getElementById("length").value),
+            diameter: parseFloat(document.getElementById("diameter").value),
+            height: parseFloat(document.getElementById("height").value),
+            whole_weight: parseFloat(
+              document.getElementById("whole_weight").value
+            ),
+            shucked_weight: parseFloat(
+              document.getElementById("shucked_weight").value
+            ),
+            viscera_weight: parseFloat(
+              document.getElementById("viscera_weight").value
+            ),
+            shell_weight: parseFloat(
+              document.getElementById("shell_weight").value
+            ),
+          };
+
+          try {
+            const response = await fetch("http://127.0.0.1:5000/predict", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(data),
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.predicted_age !== undefined) {
+              resultText.textContent = `${result.predicted_age.toFixed(1)} năm`;
+              resultContainer.classList.remove("error");
+            } else {
+              resultText.textContent = `Lỗi: ${
+                result.error || "Không thể kết nối"
+              }`;
+              resultContainer.classList.add("error");
+            }
+          } catch (error) {
+            resultText.textContent = `Lỗi kết nối: ${error.message}`;;
+            resultContainer.classList.add("error");
+          } finally {
+            // Hide loading state
+            submitButton.disabled = false;
+            buttonText.classList.remove("hidden");
+            spinner.classList.add("hidden");
+            resultContainer.classList.remove("hidden");
+          }
+        });
+    </script>
+  </body>
+</html>
